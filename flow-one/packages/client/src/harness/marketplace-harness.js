@@ -38,10 +38,8 @@ export default class MarketplaceHarness extends LitElement {
             </account-widget>
         </action-card>
     
-        <action-card title="Marketplace - Get Balance" description="Get Balance" action="SimpleTokenGetBalance" method="get"
-            fields="tenantOwner account">
-            <account-widget field="tenantOwner" label="Tenant Owner">
-            </account-widget>
+        <action-card title="Marketplace - Get FlowToken Balance" description="Get FlowToken Balance"
+            action="FlowTokenGetBalance" method="get" fields="account">
             <account-widget field="account" label="Account">
             </account-widget>
         </action-card>

@@ -48,7 +48,7 @@ pub contract Marketplace {
     pub event SaleWithdrawn(id: UInt64)
 
     pub resource interface SalePublic {
-        pub fun purchase(_ tenant: Address, id: UInt64, recipient: &HNonFungibleToken.Collection, buyTokens: @FlowToken.Vault)
+        pub fun purchase(_ tenant: Address, id: UInt64, recipient: &{HNonFungibleToken.CollectionPublic}, buyTokens: @FlowToken.Vault)
         pub fun idPrice(_ tenant: Address, id: UInt64): UFix64?
         pub fun getIDs(_ tenant: Address): [UInt64]
     }
@@ -97,13 +97,13 @@ pub contract Marketplace {
             }
         }
 
-        pub fun purchase(_ tenant: Address, id: UInt64, recipient: &HNonFungibleToken.Collection, buyTokens: @FlowToken.Vault) {
+        pub fun purchase(_ tenant: Address, id: UInt64, recipient: &{HNonFungibleToken.CollectionPublic}, buyTokens: @FlowToken.Vault) {
             pre {
                 self.getData(tenant).forSale[id] != nil:
                     "No NFT matching this id for sale!"
                 buyTokens.balance >= (self.getData(tenant).forSale[id]!):
                     "Not enough tokens to buy the NFT!"
-                recipient.getType().isInstance(Marketplace.getTenant(tenant).type.getType()): "FUCK!!!!!"
+                recipient.getType().isInstance(Marketplace.getTenant(tenant).type.getType()): "Wrong type!"
             }
             let data = self.getData(tenant)
             let price = data.forSale[id]!
@@ -129,7 +129,7 @@ pub contract Marketplace {
 
         pub fun addNFTCollection(_ tenant: Address, collection: Capability<&HNonFungibleToken.Collection>) {
             pre {
-                collection.borrow()!.getType().isInstance(Marketplace.getTenant(tenant).type.getType()): "Houston we got a FUCKIN' problem."
+                collection.borrow()!.getType().isInstance(Marketplace.getTenant(tenant).type.getType()): "Houston we got a problem."
             }
             self.datas[tenant] = SaleCollectionData(_NFTCollection: collection)
         }

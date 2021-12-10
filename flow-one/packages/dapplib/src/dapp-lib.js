@@ -90,29 +90,6 @@ module.exports = class DappLib {
     }
 
     /*
-      account - the account we want the Tenant ID for
-    */
-    static async HelloWorldGetClientTenants(data) {
-
-        let result = await Blockchain.get({
-            config: DappLib.getConfig(),
-            roles: {
-            }
-        },
-            'helloworld_get_client_tenants',
-            {
-                account: { value: data.account, type: t.Address }
-            }
-        );
-
-        return {
-            type: DappLib.DAPP_RESULT_STRING,
-            label: 'HelloWorld TenantID',
-            result: result.callData
-        }
-    }
-
-    /*
       tenantOwner - the owner of the Tenant you want to interact with
     */
     static async HelloWorldGreeting(data) {
@@ -136,28 +113,6 @@ module.exports = class DappLib {
     }
 
     /****** Tribes ******/
-
-    /*
-      Do not call this function.
-    */
-    static async TribesGetPackage(data) {
-
-        let result = await Blockchain.post({
-            config: DappLib.getConfig(),
-            roles: {
-                proposer: data.signer
-            }
-        },
-            'tribes_get_package'
-        );
-
-        return {
-            type: DappLib.DAPP_RESULT_TX_HASH,
-            label: 'Transaction Hash',
-            result: result.callData.transactionId
-        }
-
-    }
 
     /*
       signer - account that will receive its own data
@@ -341,52 +296,7 @@ module.exports = class DappLib {
         }
     }
 
-    /*
-      account - the account we want the Tenant ID for
-    */
-    static async TribesGetClientTenants(data) {
-
-        let result = await Blockchain.get({
-            config: DappLib.getConfig(),
-            roles: {
-            }
-        },
-            'tribes_get_client_tenants',
-            {
-                account: { value: data.account, type: t.Address }
-            }
-        );
-
-        return {
-            type: DappLib.DAPP_RESULT_STRING,
-            label: 'Tribes TenantID',
-            result: result.callData
-        }
-    }
-
     /****** NFTMarketplace ******/
-
-    /*
-      Do not call this function
-    */
-    static async MarketplaceGetPackage(data) {
-
-        let result = await Blockchain.post({
-            config: DappLib.getConfig(),
-            roles: {
-                proposer: data.signer
-            }
-        },
-            'marketplace_get_package'
-        );
-
-        return {
-            type: DappLib.DAPP_RESULT_TX_HASH,
-            label: 'Transaction Hash',
-            result: result.callData.transactionId
-        }
-
-    }
 
     /*
       signer - account that will receive its own data
@@ -509,7 +419,7 @@ module.exports = class DappLib {
             {
                 tenantOwner: { value: data.tenantOwner, type: t.Address },
                 id: { value: parseInt(data.id), type: t.UInt64 },
-                marketplace: { value: data.marketplace, type: t.Address }
+                seller: { value: data.marketplace, type: t.Address }
             }
         );
 
@@ -541,29 +451,6 @@ module.exports = class DappLib {
         return {
             type: DappLib.DAPP_RESULT_ARRAY,
             label: 'SaleCollection IDs',
-            result: result.callData
-        }
-    }
-
-    /*
-      account - the account we want the Tenant ID for
-    */
-    static async MarketplaceGetClientTenants(data) {
-
-        let result = await Blockchain.get({
-            config: DappLib.getConfig(),
-            roles: {
-            }
-        },
-            'marketplace_get_client_tenants',
-            {
-                account: { value: data.account, type: t.Address }
-            }
-        );
-
-        return {
-            type: DappLib.DAPP_RESULT_STRING,
-            label: 'Marketplace TenantID',
             result: result.callData
         }
     }
@@ -762,7 +649,7 @@ module.exports = class DappLib {
             roles: {
             }
         },
-            'simplenftmarketplace_flowtoken_get_balance',
+            'marketplace_get_ft_balance',
             {
                 account: { value: data.account, type: t.Address }
             }
@@ -792,28 +679,6 @@ module.exports = class DappLib {
             {
                 initialSupply: { value: data.initialSupply, type: t.UFix64 }
             }
-        );
-
-        return {
-            type: DappLib.DAPP_RESULT_TX_HASH,
-            label: 'Transaction Hash',
-            result: result.callData.transactionId
-        }
-
-    }
-
-    /*
-      Do not call this function
-    */
-    static async SimpleTokenGetPackage(data) {
-
-        let result = await Blockchain.post({
-            config: DappLib.getConfig(),
-            roles: {
-                proposer: data.signer
-            }
-        },
-            'simple_ft_get_package'
         );
 
         return {
@@ -954,53 +819,6 @@ module.exports = class DappLib {
     }
 
     /*
-      account - the account we want the Tenant ID for
-    */
-    static async SimpleTokenGetClientTenants(data) {
-
-        let result = await Blockchain.get({
-            config: DappLib.getConfig(),
-            roles: {
-            }
-        },
-            'simple_ft_get_client_tenants',
-            {
-                account: { value: data.account, type: t.Address }
-            }
-        );
-
-        return {
-            type: DappLib.DAPP_RESULT_STRING,
-            label: 'SimpleToken TenantID',
-            result: result.callData
-        }
-    }
-
-    /****** SimpleNFT ******/
-
-    /*
-      Do not call this function
-    */
-    static async SimpleNFTGetPackage(data) {
-
-        let result = await Blockchain.post({
-            config: DappLib.getConfig(),
-            roles: {
-                proposer: data.signer
-            }
-        },
-            'simple_nft_get_package'
-        );
-
-        return {
-            type: DappLib.DAPP_RESULT_TX_HASH,
-            label: 'Transaction Hash',
-            result: result.callData.transactionId
-        }
-
-    }
-
-    /*
       signer - account that will receive its own data
     */
     static async SimpleNFTInstance(data) {
@@ -1127,29 +945,6 @@ module.exports = class DappLib {
         }
     }
 
-    /*
-      account - the account we want the Tenant ID for
-    */
-    static async SimpleNFTGetClientTenants(data) {
-
-        let result = await Blockchain.get({
-            config: DappLib.getConfig(),
-            roles: {
-            }
-        },
-            'simple_nft_get_client_tenants',
-            {
-                account: { value: data.account, type: t.Address }
-            }
-        );
-
-        return {
-            type: DappLib.DAPP_RESULT_STRING,
-            label: 'SimpleNFT TenantID',
-            result: result.callData
-        }
-    }
-
     /****** Rewards ******/
 
     /*
@@ -1223,29 +1018,6 @@ module.exports = class DappLib {
             result: result.callData.transactionId
         }
 
-    }
-
-    /*
-      account - the account we want the Tenant ID for
-    */
-    static async RewardsGetClientTenants(data) {
-
-        let result = await Blockchain.get({
-            config: DappLib.getConfig(),
-            roles: {
-            }
-        },
-            'rewards_get_client_tenants',
-            {
-                account: { value: data.account, type: t.Address }
-            }
-        );
-
-        return {
-            type: DappLib.DAPP_RESULT_STRING,
-            label: 'Rewards TenantID',
-            result: result.callData
-        }
     }
 
     /****** Helpers ******/

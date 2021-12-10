@@ -5,6 +5,7 @@ import Marketplace from "../../../contracts/Project/Marketplace.cdc"
 import FlowToken from "../../../contracts/Flow/FlowToken.cdc"
 import FungibleToken from "../../../contracts/Flow/FungibleToken.cdc"
 import HyperverseAuth from "../../../contracts/Hyperverse/HyperverseAuth.cdc"
+import HNonFungibleToken from "../../../contracts/Hyperverse/HNonFungibleToken.cdc"
 import IHyperverseComposable from "../../../contracts/Hyperverse/IHyperverseComposable.cdc"
 
 // Sets up all the Bundles from the 5 Smart Modules for an account.
@@ -22,7 +23,7 @@ transaction() {
         let authCapability = signer.getCapability<&HyperverseAuth.Auth>(HyperverseAuth.AuthPrivatePath)
 
         signer.save(<- SimpleNFT.createEmptyCollection(), to: SimpleNFT.CollectionStoragePath)
-        signer.link<&SimpleNFT.Collection{SimpleNFT.CollectionPublic}>(SimpleNFT.CollectionPublicPath, target: SimpleNFT.CollectionStoragePath)
+        signer.link<&SimpleNFT.Collection{SimpleNFT.CollectionPublic, HNonFungibleToken.CollectionPublic}>(SimpleNFT.CollectionPublicPath, target: SimpleNFT.CollectionStoragePath)
     
         signer.save(<- SimpleToken.createEmptyVault(), to: SimpleToken.VaultStoragePath)
         signer.link<&SimpleToken.Vault{SimpleToken.VaultPublic}>(SimpleToken.VaultPublicPath, target: SimpleToken.VaultStoragePath)

@@ -213,6 +213,7 @@ const dappConfigFile = path.join(__dirname, 'dapp-config.json');
         import Marketplace from 0x01cf0e2f2f715450
         import FlowToken from 0x0ae53cb6e3f42a79
         import FungibleToken from 0xee82856bf20e2aa6
+        import HNonFungibleToken from 0x01cf0e2f2f715450
       
       // Sets up all the Bundles from the 5 Smart Modules for an account.
       transaction() {
@@ -229,7 +230,7 @@ const dappConfigFile = path.join(__dirname, 'dapp-config.json');
               let authCapability = signer.getCapability<&HyperverseAuth.Auth>(HyperverseAuth.AuthPrivatePath)
       
               signer.save(<- SimpleNFT.createEmptyCollection(), to: SimpleNFT.CollectionStoragePath)
-              signer.link<&SimpleNFT.Collection{SimpleNFT.CollectionPublic}>(SimpleNFT.CollectionPublicPath, target: SimpleNFT.CollectionStoragePath)
+              signer.link<&SimpleNFT.Collection{SimpleNFT.CollectionPublic, HNonFungibleToken.CollectionPublic}>(SimpleNFT.CollectionPublicPath, target: SimpleNFT.CollectionStoragePath)
           
               signer.save(<- SimpleToken.createEmptyVault(), to: SimpleToken.VaultStoragePath)
               signer.link<&SimpleToken.Vault{SimpleToken.VaultPublic}>(SimpleToken.VaultPublicPath, target: SimpleToken.VaultStoragePath)

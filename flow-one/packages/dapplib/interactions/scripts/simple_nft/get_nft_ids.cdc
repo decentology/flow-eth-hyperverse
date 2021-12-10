@@ -9,5 +9,5 @@ pub fun main(account: Address, tenantOwner: Address): [UInt64] {
                             .borrow<&SimpleNFT.Collection{SimpleNFT.CollectionPublic}>()
                             ?? panic("Could not borrow the account's SimpleNFTCollection")
 
-    return nftCollection.getIDs(tenant: tenantOwner)
+    return nftCollection.getIDs(tenantOwner)
 }
