@@ -4,15 +4,15 @@ pragma solidity ^0.8.0;
 import "../hyperverse/IHyperverseModule.sol";
 import "./@openzeppelin/contracts/utils/Counters.sol";
 
-contract TribesState is IHyperverseModule {
+contract Tribes is IHyperverseModule {
     using Counters for Counters.Counter;
 
+    private address owner;
+
     struct Tenant {
-        address whoCanCallMe;
         mapping(uint256 => TribeData) tribes;
         mapping(address => uint256) participants;
         Counters.Counter tribeIds;
-        address owner;
     }
 
     struct TribeData {
@@ -32,7 +32,7 @@ contract TribesState is IHyperverseModule {
 
     constructor() {
         metadata = ModuleMetadata(
-            "TribesState",
+            "Tribes",
             Author(
                 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4,
                 "https://externallink.net"
@@ -41,47 +41,36 @@ contract TribesState is IHyperverseModule {
             3479831479814,
             "https://externalLink.net"
         );
+
+        // HARDCODED ADDRESS
+        owner = 0x01;
     }
 
     function getState(address tenant) private view returns (Tenant storage) {
         return tenants[tenant];
     }
 
-    // If there's a msg.sender involved and we want calling contract to decide
-    modifier canCallMe(address tenant) {
-        require(msg.sender == getState(tenant).whoCanCallMe, "You cannot call me!");
-        _;
+    // Even if this contract gets inherited, they can't change this function.
+    function pay() private {
+        // pay owner...
     }
 
-    // If there's a msg.sender involved and we want a user to call directly
-    modifier noWhoCanCallMe(address tenant) {
-        require(getState(tenant).whoCanCallMe == address(0), "You have to use the Caller function");
-        _;
-    }
-
-    // Use this one if there is no msg.sender involved
-    // If a function is marked with `either`, that means they
-    // do not need to have duplicate functions
-    modifier either(address tenant) {
-        require(
-            getState(tenant).whoCanCallMe == address(0) || msg.sender == getState(tenant).whoCanCallMe, 
-            "You have to use the Caller function");
-        _;
-    }
- 
-    // whoCanCallMe should be the address of the TribesFunctions contracts
-    // (or the next contract in the dependency tree)
-    function restrictCaller(address whoCanCallMe) external {
-        getState(msg.sender).whoCanCallMe = whoCanCallMe;
-    }
-
-    function addNewTribeCaller(
-        address tenant,
+     function addNewTribe(
         bytes memory tribeName,
         bytes memory ipfsHash,
         bytes memory description
-    ) external either(tenant) {
-        Tenant storage state = getState(tenant);
+    ) external {
+        _addNewTribe(tribeName, ipfsHash, description);
+        pay(); // ....
+    }
+
+    // "Hook" in Solidity
+    function _addNewTribe(
+        bytes memory tribeName,
+        bytes memory ipfsHash,
+        bytes memory description
+    ) internal virtual {
+        Tenant storage state = getState(msg.sender);
 
         state.tribeIds.increment();
         uint256 newTribeId = state.tribeIds.current();
@@ -95,27 +84,7 @@ contract TribesState is IHyperverseModule {
         emit NewTribeCreated(tribeName, ipfsHash, description);
     }
 
-    function joinTribeCaller(
-        address tenant,
-        uint256 tribeId,
-        address user
-    ) public canCallMe(tenant) {
-        Tenant storage state = getState(tenant);
-        require(
-            state.participants[user] == 0,
-            "This member is already in a Tribe!"
-        );
-        require(state.tribeIds.current() >= tribeId, "Tribe does not exist");
-
-        state.participants[user] = tribeId;
-        TribeData storage tribeData = state.tribes[tribeId];
-        tribeData.members[user] = true;
-        tribeData.numOfMembers += 1;
-
-        emit JoinedTribe(tribeId, user);
-    }
-
-    function joinTribe(address tenant, uint256 tribeId) public noWhoCanCallMe(tenant) {
+    function joinTribe(address tenant, uint256 tribeId) public virtual {
         address user = msg.sender;
         Tenant storage state = getState(tenant);
         require(
@@ -132,40 +101,26 @@ contract TribesState is IHyperverseModule {
         emit JoinedTribe(tribeId, user);
     }
 
-    function leaveTribeCaller(address tenant, address member) public canCallMe(tenant) {
+    function leaveTribe(address tenant) public virtual {
+        address user = msg.sender;
         Tenant storage state = getState(tenant);
         require(
-            state.participants[member] != 0,
+            state.participants[user] != 0,
             "This member is not in a Tribe!"
         );
 
-        TribeData storage tribeData = state.tribes[state.participants[member]];
-        state.participants[member] = 0;
-        tribeData.members[member] = false;
+        TribeData storage tribeData = state.tribes[state.participants[user]];
+        state.participants[user] = 0;
+        tribeData.members[user] = false;
         tribeData.numOfMembers -= 1;
 
-        emit LeftTribe(state.participants[member], member);
-    }
-
-    function leaveTribe(address tenant) public noWhoCanCallMe(tenant) {
-        address member = msg.sender;
-        Tenant storage state = getState(tenant);
-        require(
-            state.participants[member] != 0,
-            "This member is not in a Tribe!"
-        );
-
-        TribeData storage tribeData = state.tribes[state.participants[member]];
-        state.participants[member] = 0;
-        tribeData.members[member] = false;
-        tribeData.numOfMembers -= 1;
-
-        emit LeftTribe(state.participants[member], member);
+        emit LeftTribe(state.participants[user], user);
     }
 
     function getUserTribe(address tenant, address user)
         public
         view
+        virtual
         returns (uint256)
     {
         Tenant storage state = getState(tenant);
@@ -182,6 +137,7 @@ contract TribesState is IHyperverseModule {
     function getTribeData(address tenant, uint256 tribeId)
         public
         view
+        virtual
         returns (
             bytes memory,
             bytes memory,
@@ -193,7 +149,7 @@ contract TribesState is IHyperverseModule {
         return (tribeData.name, tribeData.ipfsHash, tribeData.description);
     }
 
-    function totalTribes(address tenant) public view returns (uint256) {
+    function totalTribes(address tenant) public view virtual returns (uint256) {
         return getState(tenant).tribeIds.current();
     }
 }

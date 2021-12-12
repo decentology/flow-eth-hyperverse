@@ -32,11 +32,11 @@ pub contract Marketplace {
 
     pub fun createTenant(auth: &HyperverseAuth.Auth, type: Type) {
         pre {
-            type.isInstance(Type<@HNonFungibleToken.Collection>().getType()): "We got outselves a problem, bitch."
+            type.getType().isInstance(Type<@HNonFungibleToken.Collection>().getType()): "Not a HNonFungibleToken type!"
         }
         let tenant = auth.owner!.address
         
-        self.tenants[tenant] <-! create Tenant(tenant, _type: type)
+        self.tenants[tenant] <-! create Tenant(tenant, _type: type.getType())
         emit TenantCreated(tenant: tenant)
     }
 
@@ -103,7 +103,7 @@ pub contract Marketplace {
                     "No NFT matching this id for sale!"
                 buyTokens.balance >= (self.getData(tenant).forSale[id]!):
                     "Not enough tokens to buy the NFT!"
-                recipient.getType().isInstance(Marketplace.getTenant(tenant).type.getType()): "Wrong type!"
+                recipient.getType().isInstance(Marketplace.getTenant(tenant).type): "Wrong type!"
             }
             let data = self.getData(tenant)
             let price = data.forSale[id]!
@@ -129,7 +129,7 @@ pub contract Marketplace {
 
         pub fun addNFTCollection(_ tenant: Address, collection: Capability<&HNonFungibleToken.Collection>) {
             pre {
-                collection.borrow()!.getType().isInstance(Marketplace.getTenant(tenant).type.getType()): "Houston we got a problem."
+                collection.borrow()!.getType().isInstance(Marketplace.getTenant(tenant).type): "Houston we got a problem."
             }
             self.datas[tenant] = SaleCollectionData(_NFTCollection: collection)
         }
