@@ -7,7 +7,7 @@ import "./@openzeppelin/contracts/utils/Counters.sol";
 contract Tribes is IHyperverseModule {
     using Counters for Counters.Counter;
 
-    private address owner;
+    address private owner;
 
     struct Tenant {
         mapping(uint256 => TribeData) tribes;
@@ -43,7 +43,7 @@ contract Tribes is IHyperverseModule {
         );
 
         // HARDCODED ADDRESS
-        owner = 0x01;
+        owner = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
     }
 
     function getState(address tenant) private view returns (Tenant storage) {
@@ -55,7 +55,7 @@ contract Tribes is IHyperverseModule {
         // pay owner...
     }
 
-     function addNewTribe(
+    function addNewTribe(
         bytes memory tribeName,
         bytes memory ipfsHash,
         bytes memory description

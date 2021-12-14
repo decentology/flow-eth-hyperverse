@@ -1,4 +1,5 @@
 import HyperverseModule from "./HyperverseModule.cdc"
+import HyperverseAuth from "./HyperverseAuth.cdc"
 
 pub contract interface IHyperverseComposable {
 
@@ -15,4 +16,6 @@ pub contract interface IHyperverseComposable {
     pub resource Tenant: ITenant {
         pub var tenant: Address
     }
+
+    pub fun createTenant(auth: &HyperverseAuth.Auth)
 }

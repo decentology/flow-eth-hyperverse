@@ -17,6 +17,7 @@ pragma solidity >=0.7.0 <0.9.0;
 
 abstract contract IHyperverseModule {
     ModuleMetadata public metadata;
+    address private owner;
 
     struct ModuleMetadata {
         bytes title; // <-- `pub var title: String` in Cadence

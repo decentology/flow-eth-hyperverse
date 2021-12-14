@@ -1,5 +1,3 @@
-import IHyperverseComposable from "./IHyperverseComposable.cdc"
-
 pub contract HyperverseAuth {
     pub var totalAuths: UInt64
 

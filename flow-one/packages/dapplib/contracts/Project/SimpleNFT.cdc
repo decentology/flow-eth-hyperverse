@@ -22,7 +22,7 @@ pub contract SimpleNFT: HNonFungibleToken {
         return self.tenants[tenant] != nil
     }
 
-    pub resource Tenant {
+    pub resource Tenant: IHyperverseComposable.ITenant {
         pub var tenant: Address
         pub(set) var totalSupply: UInt64
         
@@ -62,13 +62,13 @@ pub contract SimpleNFT: HNonFungibleToken {
     pub resource interface CollectionPublic {
         pub fun deposit(token: @HNonFungibleToken.NFT)
         pub fun getIDs(_ tenant: Address): [UInt64]
-        // pub fun getMetadata(tenant: Address, id: UInt64): {String: String}
+        pub fun getMetadata(_ tenant: Address, id: UInt64): {String: String}
     }
 
     pub resource CollectionData {
         pub(set) var ownedNFTs: @{UInt64: NFT}
         init() { self.ownedNFTs <- {} }
-        destroy() {destroy self.ownedNFTs}
+        destroy() { destroy self.ownedNFTs }
     }
 
     pub let CollectionStoragePath: StoragePath
@@ -107,12 +107,12 @@ pub contract SimpleNFT: HNonFungibleToken {
             return &data.ownedNFTs[id] as &HNonFungibleToken.NFT
         }
 
-        // pub fun getMetadata(tenant: Address, id: UInt64): {String: String} {
-        //     let data = self.getData(tenant)
-        //     let ref = &data.ownedNFTs[id] as auth &HNonFungibleToken.NFT
-        //     let wholeNFT = ref as! &NFT
-        //     return wholeNFT.metadata
-        // }
+        pub fun getMetadata(_ tenant: Address, id: UInt64): {String: String} {
+            let data = self.getData(tenant)
+            let ref = &data.ownedNFTs[id] as auth &HNonFungibleToken.NFT
+            let wholeNFT = ref as! &NFT
+            return wholeNFT.metadata
+        }
 
         destroy() {
             destroy self.datas
