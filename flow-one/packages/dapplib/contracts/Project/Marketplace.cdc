@@ -6,39 +6,7 @@ import FungibleToken from "../Flow/FungibleToken.cdc"
 import HyperverseAuth from "../Hyperverse/HyperverseAuth.cdc"
 import Registry from "../Hyperverse/Registry.cdc"
 
-pub contract Marketplace {
-
-    /**************************************** TENANT ****************************************/
-
-    pub event TenantCreated(tenant: Address)
-    access(contract) var tenants: @{Address: Tenant}
-    access(contract) fun getTenant(_ tenant: Address): &Tenant {
-        return &self.tenants[tenant] as! &Tenant
-    }
-    pub fun tenantExists(tenant: Address): Bool {
-        return self.tenants[tenant] != nil
-    }
-    
-    pub resource Tenant: IHyperverseComposable.ITenant {
-        pub var tenant: Address
-
-        pub var type: Type
-
-        init(_ tenant: Address, _type: Type) {
-            self.tenant = tenant
-            self.type = _type
-        }
-    }
-
-    pub fun createTenant(auth: &HyperverseAuth.Auth, type: Type) {
-        pre {
-            type.getType().isInstance(Type<@HNonFungibleToken.Collection>().getType()): "Not a HNonFungibleToken type!"
-        }
-        let tenant = auth.owner!.address
-        
-        self.tenants[tenant] <-! create Tenant(tenant, _type: type.getType())
-        emit TenantCreated(tenant: tenant)
-    }
+pub contract Marketplace: IHyperverseComposable {
 
     /**************************************** FUNCTIONALITY ****************************************/
 
@@ -78,7 +46,6 @@ pub contract Marketplace {
             emit SaleWithdrawn(id: id)
         }
 
-        // You pass in the tenant of the SimpleNFT you'll be listing for sale.
         pub fun listForSale(_ tenant: Address, ids: [UInt64], price: UFix64) {
             pre {
                 price > 0.0:
@@ -103,7 +70,6 @@ pub contract Marketplace {
                     "No NFT matching this id for sale!"
                 buyTokens.balance >= (self.getData(tenant).forSale[id]!):
                     "Not enough tokens to buy the NFT!"
-                recipient.getType().isInstance(Marketplace.getTenant(tenant).type): "Wrong type!"
             }
             let data = self.getData(tenant)
             let price = data.forSale[id]!
@@ -111,8 +77,7 @@ pub contract Marketplace {
             vaultRef.deposit(from: <-buyTokens)
 
             let nftCollection = data.NFTCollection.borrow()!
-            let token <- nftCollection.withdraw(tenant, withdrawID: id)
-            recipient.deposit(token: <-token)
+            recipient.deposit(token: <-nftCollection.withdraw(tenant, withdrawID: id))
             self.unlistSale(tenant, id: id)
             emit NFTPurchased(id: id, price: price)
         }
@@ -128,9 +93,6 @@ pub contract Marketplace {
         }
 
         pub fun addNFTCollection(_ tenant: Address, collection: Capability<&HNonFungibleToken.Collection>) {
-            pre {
-                collection.borrow()!.getType().isInstance(Marketplace.getTenant(tenant).type): "Houston we got a problem."
-            }
             self.datas[tenant] = SaleCollectionData(_NFTCollection: collection)
         }
 
@@ -144,24 +106,55 @@ pub contract Marketplace {
         return <- create SaleCollection(_ftVault: ftVault)
     }
 
+    /**************************************** TENANT ****************************************/
+
+    pub var metadata: HyperverseModule.Metadata
+
+    pub event TenantCreated(tenant: Address)
+    access(contract) var tenants: @{Address: IHyperverseComposable.Tenant}
+    access(contract) fun getTenant(_ tenant: Address): &Tenant? {
+        if self.tenantExists(tenant) {
+            let ref = &self.tenants[tenant] as auth &IHyperverseComposable.Tenant
+            return ref as! &Tenant  
+        }
+        return nil
+    }
+    pub fun tenantExists(_ tenant: Address): Bool {
+        return self.tenants[tenant] != nil
+    }
+    
+    pub resource Tenant {
+        pub var tenant: Address
+
+        init(_ tenant: Address) {
+            self.tenant = tenant
+        }
+    }
+
+    pub fun createTenant(newTenant: AuthAccount) {
+        let tenant = newTenant.address
+        self.tenants[tenant] <-! create Tenant(tenant)
+        emit TenantCreated(tenant: tenant)
+    }
+
     init() {
         self.tenants <- {}
+        self.metadata = HyperverseModule.Metadata(
+                            _identifier: self.getType().identifier,
+                            _contractAddress: self.account.address,
+                            _title: "Marketplace", 
+                            _authors: [HyperverseModule.Author(_address: 0x26a365de6d6237cd, _externalLink: "https://www.decentology.com/")], 
+                            _version: "0.0.1", 
+                            _publishedAt: getCurrentBlock().timestamp,
+                            _externalLink: ""
+                        )
 
         self.SaleCollectionStoragePath = /storage/MarketplaceSaleCollection
         self.SaleCollectionPublicPath = /public/MarketplaceSaleCollection
 
         Registry.registerContract(
             proposer: self.account.borrow<&HyperverseAuth.Auth>(from: HyperverseAuth.AuthStoragePath)!, 
-            metadata: HyperverseModule.ModuleMetadata(
-                _identifier: self.getType().identifier,
-                _contractAddress: self.account.address,
-                _title: "Marketplace", 
-                _authors: [HyperverseModule.Author(_address: 0x26a365de6d6237cd, _externalLink: "https://www.decentology.com/")], 
-                _version: "0.0.1", 
-                _publishedAt: getCurrentBlock().timestamp,
-                _externalLink: "",
-                _secondaryModules: []
-            )
+            metadata: self.metadata
         )
 
         emit MarketplaceInitialized()

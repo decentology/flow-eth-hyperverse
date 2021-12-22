@@ -9,7 +9,7 @@ transaction(id: UInt64, recipient: Address, tenantOwner: Address) {
                                     .borrow<&SimpleNFT.Collection{SimpleNFT.CollectionPublic}>()
                                     ?? panic("Could not borrow the recipient's SimpleNFT.Collection")
 
-        recipientCollection.deposit(token: <- signerCollection.withdraw(tenant: tenantOwner, withdrawID: id))
+        recipientCollection.deposit(token: <- signerCollection.withdraw(tenantOwner, withdrawID: id))
     }
 
     execute {

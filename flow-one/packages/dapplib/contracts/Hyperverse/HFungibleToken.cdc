@@ -98,11 +98,13 @@ pub contract interface HFungibleToken {
         /// capability that allows all users to access the provider
         /// resource through a reference.
         ///
-        pub fun withdraw(amount: UFix64): @Vault {
+        pub fun withdraw(_ tenant: Address, amount: UFix64): @VaultTransferrable {
             post {
                 // `result` refers to the return value
                 result.balance == amount:
                     "Withdrawal amount must be the same as the balance of the withdrawn Vault"
+                result.tenant == tenant:
+                    "Vault has a different tenant than its spawner"
             }
         }
     }
@@ -121,7 +123,7 @@ pub contract interface HFungibleToken {
 
         /// deposit takes a Vault and deposits it into the implementing resource type
         ///
-        pub fun deposit(from: @Vault)
+        pub fun deposit(from: @VaultTransferrable)
     }
 
     /// Balance
@@ -131,17 +133,11 @@ pub contract interface HFungibleToken {
     /// is initialized correctly.
     ///
     pub resource interface Balance {
+        pub fun balance(_ tenant: Address): UFix64
+    }
 
-        /// The total balance of a vault
-        ///
-        pub var balance: UFix64
-
-        init(tenant: Address, balance: UFix64) {
-            post {
-                self.balance == balance:
-                    "Balance must be initialized to the initial balance"
-            }
-        }
+    pub struct VaultData {
+        pub(set) var balance: UFix64
     }
 
     /// Vault
@@ -149,39 +145,26 @@ pub contract interface HFungibleToken {
     /// The resource that contains the functions to send and receive tokens.
     ///
     pub resource Vault: Provider, Receiver, Balance {
-        pub let tenant: Address
-
-        // The declaration of a concrete type in a contract interface means that
-        // every Fungible Token contract that implements the HFungibleToken interface
-        // must define a concrete `Vault` resource that conforms to the `Provider`, `Receiver`,
-        // and `Balance` interfaces, and declares their required fields and functions
-
-        /// The total balance of the vault
-        ///
-        pub var balance: UFix64
+        access(contract) var datas: {Address: VaultData}
+        access(contract) fun getData(_ tenant: Address): &VaultData
 
         /// withdraw subtracts `amount` from the Vault's balance
         /// and returns a new Vault with the subtracted balance
         ///
-        pub fun withdraw(amount: UFix64): @Vault {
+        pub fun withdraw(_ tenant: Address, amount: UFix64): @VaultTransferrable {
             pre {
                 self.balance >= amount:
                     "Amount withdrawn must be less than or equal than the balance of the Vault"
             }
             post {
-                // use the special function `before` to get the value of the `balance` field
-                // at the beginning of the function execution
-                //
                 self.balance == before(self.balance) - amount:
                     "New Vault balance must be the difference of the previous balance and the withdrawn Vault"
-                result.tenant == self.tenant:
-                    "Vault has a different tenant than its spawner"
             }
         }
 
         /// deposit takes a Vault and adds its balance to the balance of this Vault
         ///
-        pub fun deposit(from: @Vault) {
+        pub fun deposit(from: @VaultTransferrable) {
             // Assert that the concrete type of the deposited vault is the same
             // as the vault that is accepting the deposit
             pre {
@@ -196,14 +179,16 @@ pub contract interface HFungibleToken {
             }
         }
 
-        // The conforming type must declare an initializer
-        // that allows prioviding the initial balance of the Vault
-        //
-        init(_ tenant: Address, _balance: UFix64)
+        pub fun balance(_ tenant: Address): UFix64
     }
 
-     pub resource Bundle {
-        pub var vaults: @{Address: Vault}
-        pub fun borrowVault(tenant: Address): &Vault
+    pub resource VaultTransferrable {
+        pub var balance: UFix64 
+        pub let tenant: Address
+        access(contract) fun clear() {
+            post {
+                self.balance == (0.0): "Didn't clear the balance."
+            }
+        }
     }
 }

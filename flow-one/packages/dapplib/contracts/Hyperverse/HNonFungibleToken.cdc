@@ -68,18 +68,9 @@ pub contract interface HNonFungibleToken {
     //
     pub event Deposit(tenant: Address, id: UInt64, to: Address?)
 
-    // Interface that the NFTs have to conform to
-    //
-    pub resource interface INFT {
-        pub let tenant: Address
-        // The unique ID that each NFT has
-        // determined by the resource's `uuid`
-        pub let id: UInt64
-    }
-
     // Requirement that all conforming NFT smart contracts have
     // to define a resource called NFT that conforms to INFT
-    pub resource NFT: INFT {
+    pub resource NFT {
         pub let tenant: Address
         pub let id: UInt64
     }
@@ -112,10 +103,16 @@ pub contract interface HNonFungibleToken {
         pub fun borrowNFT(_ tenant: Address, id: UInt64): &NFT
     }
 
+    pub resource CollectionData {
+        pub(set) var ownedNFTs: @{UInt64: NFT}
+    }
+
     // Requirement for the the concrete resource type
     // to be declared in the implementing contract
     //
     pub resource Collection: Provider, Receiver, CollectionPublic {
+        access(contract) var datas: @{Address: CollectionData}
+        access(contract) fun getData(_ tenant: Address): &HNonFungibleToken.CollectionData
         // withdraw removes an NFT from the collection and moves it to the caller
         pub fun withdraw(_ tenant: Address, withdrawID: UInt64): @NFT
 

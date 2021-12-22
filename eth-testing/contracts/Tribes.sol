@@ -50,26 +50,11 @@ contract Tribes is IHyperverseModule {
         return tenants[tenant];
     }
 
-    // Even if this contract gets inherited, they can't change this function.
-    function pay() private {
-        // pay owner...
-    }
-
     function addNewTribe(
         bytes memory tribeName,
         bytes memory ipfsHash,
         bytes memory description
-    ) external {
-        _addNewTribe(tribeName, ipfsHash, description);
-        pay(); // ....
-    }
-
-    // "Hook" in Solidity
-    function _addNewTribe(
-        bytes memory tribeName,
-        bytes memory ipfsHash,
-        bytes memory description
-    ) internal virtual {
+    ) public virtual {
         Tenant storage state = getState(msg.sender);
 
         state.tribeIds.increment();

@@ -1,6 +1,6 @@
 pub contract HyperverseModule {
 
-    pub struct ModuleMetadata {
+    pub struct Metadata {
         pub var identifier: String
         pub var contractAddress: Address
         pub var title: String
@@ -8,7 +8,6 @@ pub contract HyperverseModule {
         pub var version: String
         pub var publishedAt: UFix64
         pub var externalURI: String
-        pub var secondaryModules: [{Address: String}]?
 
         init(
             _identifier: String,
@@ -17,8 +16,7 @@ pub contract HyperverseModule {
             _authors: [Author], 
             _version: String, 
             _publishedAt: UFix64,
-            _externalURI: String,
-            _secondaryModules: [{Address: String}]?,
+            _externalURI: String
         ) {
             self.identifier = _identifier
             self.contractAddress = _contractAddress
@@ -27,7 +25,6 @@ pub contract HyperverseModule {
             self.version = _version
             self.publishedAt = _publishedAt
             self.externalURI = _externalURI
-            self.secondaryModules = _secondaryModules
         }
     }
 

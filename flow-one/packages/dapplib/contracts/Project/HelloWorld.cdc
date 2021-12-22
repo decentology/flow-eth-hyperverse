@@ -3,21 +3,26 @@ import HyperverseModule from "../Hyperverse/HyperverseModule.cdc"
 import HyperverseAuth from "../Hyperverse/HyperverseAuth.cdc"
 import Registry from "../Hyperverse/Registry.cdc"
 
-pub contract HelloWorld {
+pub contract HelloWorld: IHyperverseComposable {
 
     /**************************************** TENANT ****************************************/
 
+    pub var metadata: HyperverseModule.Metadata
+
     pub event TenantCreated(tenant: Address)
-    
-    access(contract) var tenants: @{Address: Tenant}
-    access(contract) fun getTenant(_ tenant: Address): &Tenant {
-        return &self.tenants[tenant] as &Tenant
+    access(contract) var tenants: @{Address: IHyperverseComposable.Tenant}
+    access(contract) fun getTenant(_ tenant: Address): &Tenant? {
+        if self.tenantExists(tenant) {
+            let ref = &self.tenants[tenant] as auth &IHyperverseComposable.Tenant
+            return ref as! &Tenant  
+        }
+        return nil
     }
-    pub fun tenantExists(tenant: Address): Bool {
+    pub fun tenantExists(_ tenant: Address): Bool {
         return self.tenants[tenant] != nil
     }
     
-    pub resource Tenant: IHyperverseComposable.ITenant {
+    pub resource Tenant {
         pub var tenant: Address
         pub let greeting: String
 
@@ -28,8 +33,8 @@ pub contract HelloWorld {
         }
     }
 
-    pub fun createTenant(auth: &HyperverseAuth.Auth) {
-        let tenant = auth.owner!.address
+    pub fun createTenant(newTenant: AuthAccount) {
+        let tenant = newTenant.address
         self.tenants[tenant] <-! create Tenant(tenant)
         emit TenantCreated(tenant: tenant)
     }
@@ -39,24 +44,25 @@ pub contract HelloWorld {
     pub event HelloWorldInitialized()
 
     pub fun getGreeting(_ tenant: Address): String {
-        return self.getTenant(tenant).greeting
+        return self.getTenant(tenant)!.greeting
     }
 
     init() {
         self.tenants <- {}
 
+        self.metadata = HyperverseModule.Metadata(
+                            _identifier: self.getType().identifier,
+                            _contractAddress: self.account.address,
+                            _title: "HelloWorld", 
+                            _authors: [HyperverseModule.Author(_address: 0x26a365de6d6237cd, _externalLink: "https://www.decentology.com/")], 
+                            _version: "0.0.1", 
+                            _publishedAt: getCurrentBlock().timestamp,
+                            _externalLink: ""
+                        )
+
         Registry.registerContract(
             proposer: self.account.borrow<&HyperverseAuth.Auth>(from: HyperverseAuth.AuthStoragePath)!, 
-            metadata: HyperverseModule.ModuleMetadata(
-                _identifier: self.getType().identifier,
-                _contractAddress: self.account.address,
-                _title: "HelloWorld", 
-                _authors: [HyperverseModule.Author(_address: 0x26a365de6d6237cd, _externalLink: "https://www.decentology.com/")], 
-                _version: "0.0.1", 
-                _publishedAt: getCurrentBlock().timestamp,
-                _externalLink: "",
-                _secondaryModules: nil
-            )
+            metadata: self.metadata
         )
 
         emit HelloWorldInitialized()

@@ -3,19 +3,15 @@ import HyperverseAuth from "./HyperverseAuth.cdc"
 
 pub contract interface IHyperverseComposable {
 
+    pub var metadata: HyperverseModule.Metadata
+
     pub event TenantCreated(tenant: Address)
-
     access(contract) var tenants: @{Address: Tenant}
-    access(contract) fun getTenant(tenant: Address): &Tenant
-    pub fun tenantExists(tenant: Address): Bool
+    access(contract) fun getTenant(_ tenant: Address): &Tenant?
+    pub fun tenantExists(_ tenant: Address): Bool
 
-    pub resource interface ITenant {
+    pub resource Tenant {
         pub var tenant: Address
     }
-
-    pub resource Tenant: ITenant {
-        pub var tenant: Address
-    }
-
-    pub fun createTenant(auth: &HyperverseAuth.Auth)
+    pub fun createTenant(newTenant: AuthAccount)
 }
