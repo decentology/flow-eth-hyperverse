@@ -5,42 +5,6 @@ import Registry from "../Hyperverse/Registry.cdc"
 
 pub contract Tribes: IHyperverseComposable {
 
-    /**************************************** TENANT ****************************************/
-
-    pub var metadata: HyperverseModule.Metadata
-
-    pub event TenantCreated(tenant: Address)
-    access(contract) var tenants: @{Address: IHyperverseComposable.Tenant}
-    access(contract) fun getTenant(_ tenant: Address): &Tenant? {
-        if self.tenantExists(tenant) {
-            let ref = &self.tenants[tenant] as auth &IHyperverseComposable.Tenant
-            return ref as! &Tenant  
-        }
-        return nil
-    }
-    pub fun tenantExists(_ tenant: Address): Bool {
-        return self.tenants[tenant] != nil
-    }
-
-    pub resource Tenant {
-        pub var tenant: Address
-
-        pub(set) var tribes: {String: TribeData}
-        pub(set) var participants: {Address: Bool}
-
-        init(_ tenant: Address) {
-            self.tenant = tenant
-            self.tribes = {}
-            self.participants = {}
-        }
-    }
-
-    pub fun createTenant(newTenant: AuthAccount) {
-        let tenant = newTenant.address
-        self.tenants[tenant] <-! create Tenant(tenant)
-        emit TenantCreated(tenant: tenant)
-    }
-
     /**************************************** FUNCTIONALITY ****************************************/
 
     pub event TribesContractInitialized()
@@ -58,15 +22,15 @@ pub contract Tribes: IHyperverseComposable {
         }
     }
 
-    pub fun createAdmin(auth: &HyperverseAuth.Auth): @Admin { return <- create Admin(auth.owner!.address) }
-
     pub resource interface IdentityPublic {
         pub fun currentTribeName(_ tenant: Address): String?
     }
 
     pub struct IdentityData {
         pub(set) var currentTribeName: String?
-        init() { self.currentTribeName = nil }
+        init() { 
+            self.currentTribeName = nil 
+        }
     }
 
     pub let IdentityStoragePath: StoragePath
@@ -108,14 +72,18 @@ pub contract Tribes: IHyperverseComposable {
             data.currentTribeName = nil
         }
 
-        pub fun currentTribeName(_ tenant: Address): String? { return self.getData(tenant).currentTribeName}
+        pub fun currentTribeName(_ tenant: Address): String? { 
+            return self.getData(tenant).currentTribeName
+        }
 
         init() {
             self.datas = {}
         }
     }
 
-    pub fun createIdentity(): @Identity { return <- create Identity() }
+    pub fun createIdentity(): @Identity { 
+        return <- create Identity() 
+    }
 
     pub struct TribeData {
         pub let name: String
@@ -138,8 +106,8 @@ pub contract Tribes: IHyperverseComposable {
         init(_name: String, _ipfsHash: String, _description: String) {
             self.name = _name
             self.ipfsHash = _ipfsHash
-            self.members = {}
             self.description = _description
+            self.members = {}
         }
     }
 
@@ -149,6 +117,44 @@ pub contract Tribes: IHyperverseComposable {
 
     pub fun getTribeData(_ tenant: Address, tribeName: String): TribeData {
         return self.getTenant(tenant)!.tribes[tribeName]!
+    }
+
+    /**************************************** TENANT ****************************************/
+
+    pub var metadata: HyperverseModule.Metadata
+
+    pub event TenantCreated(tenant: Address)
+    access(contract) var tenants: @{Address: IHyperverseComposable.Tenant}
+    access(contract) fun getTenant(_ tenant: Address): &Tenant? {
+        if self.tenantExists(tenant) {
+            let ref = &self.tenants[tenant] as auth &IHyperverseComposable.Tenant
+            return ref as! &Tenant  
+        }
+        return nil
+    }
+    pub fun tenantExists(_ tenant: Address): Bool {
+        return self.tenants[tenant] != nil
+    }
+
+    pub resource Tenant {
+        pub var tenant: Address
+
+        pub(set) var tribes: {String: TribeData}
+        pub(set) var participants: {Address: Bool}
+
+        init(_ tenant: Address) {
+            self.tenant = tenant
+            self.tribes = {}
+            self.participants = {}
+        }
+    }
+
+    pub fun createTenant(newTenant: AuthAccount) {
+        let tenant = newTenant.address
+        self.tenants[tenant] <-! create Tenant(tenant)
+        emit TenantCreated(tenant: tenant)
+
+        newTenant.save(<- create Admin(tenant), to: self.AdminStoragePath)
     }
 
     init() {
