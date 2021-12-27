@@ -16,9 +16,7 @@ contract Tribes is IHyperverseModule {
     }
 
     struct TribeData {
-        bytes name;
-        bytes ipfsHash;
-        bytes description;
+        string metadata;
         mapping(address => bool) members;
         uint256 numOfMembers;
         uint256 tribeId;
@@ -28,7 +26,7 @@ contract Tribes is IHyperverseModule {
 
     event JoinedTribe(uint256 tribeId, address newMember);
     event LeftTribe(uint256 tribeId, address member);
-    event NewTribeCreated(bytes name, bytes ipfsHash, bytes description);
+    event NewTribeCreated(string metadata);
 
     constructor() {
         metadata = ModuleMetadata(
@@ -50,23 +48,17 @@ contract Tribes is IHyperverseModule {
         return tenants[tenant];
     }
 
-    function addNewTribe(
-        bytes memory tribeName,
-        bytes memory ipfsHash,
-        bytes memory description
-    ) public virtual {
+    function addNewTribe(string memory metadata) public virtual {
         Tenant storage state = getState(msg.sender);
 
         state.tribeIds.increment();
         uint256 newTribeId = state.tribeIds.current();
 
         TribeData storage newTribe = state.tribes[newTribeId];
-        newTribe.name = tribeName;
-        newTribe.description = description;
-        newTribe.ipfsHash = ipfsHash;
+        newTribe.metadata = metadata;
         newTribe.tribeId = newTribeId;
 
-        emit NewTribeCreated(tribeName, ipfsHash, description);
+        emit NewTribeCreated(metadata);
     }
 
     function joinTribe(address tenant, uint256 tribeId) public virtual {
@@ -123,15 +115,11 @@ contract Tribes is IHyperverseModule {
         public
         view
         virtual
-        returns (
-            bytes memory,
-            bytes memory,
-            bytes memory
-        )
+        returns (string memory)
     {
         Tenant storage state = getState(tenant);
         TribeData storage tribeData = state.tribes[tribeId];
-        return (tribeData.name, tribeData.ipfsHash, tribeData.description);
+        return (tribeData.metadata);
     }
 
     function totalTribes(address tenant) public view virtual returns (uint256) {
